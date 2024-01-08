@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>game</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: black;
+            width: 100vw;
+            height: 100vh;
+        }
+        .canvasShit {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            width: 100%;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+        .canvas {
+            display: block;
+            margin: 0 auto;
+            border: 2px solid white;
+        }
+        #credits {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            font-size: 20px;
+            font-family: Arial;
+        }
+        .canvasShit button {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: transparent;
+            border: 2px solid white;
+            color: white;
+            padding: 10px 20px;
+            font-size: 20px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="canvasShit" style="display: block;">
+        <button id="button">Iniciar Jogo</button>
+        <p id="credits">by mzle</p>
+        <video id="video" src="./videos/intro.mp4" style="display: none;"></video>
+        <video id="video2" src="./videos/ending.mp4" style="display: none;"></video>
+        <canvas id="canvas" width="800" height="600"></canvas>
+    </div>    
+    <script src="https://cdn.jsdelivr.net/npm/requirejs@2.3.6/require.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

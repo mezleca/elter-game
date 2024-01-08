@@ -1,2 +1,2 @@
 # elter-game
-silly game
+htpps://elter-eduardo.fun/jam
