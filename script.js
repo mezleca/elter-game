@@ -96,19 +96,23 @@ let direita = false; // esquerda
 const botaoEsquerda = document.getElementById("esquerda");
 const botaoDireita = document.getElementById("direita");
 
-botaoEsquerda.addEventListener("mousedown", () => {
+botaoEsquerda.addEventListener("touchstart", (event) => {
+    event.preventDefault();
     esquerda = true;
 });
 
-botaoEsquerda.addEventListener("mouseup", () => {
+botaoEsquerda.addEventListener("touchend", () => {
+    event.preventDefault();
     esquerda = false;
 });
 
-botaoDireita.addEventListener("mousedown", () => {
+botaoDireita.addEventListener("touchstart", () => {
+    event.preventDefault();
     direita = true;
 });
 
-botaoDireita.addEventListener("mouseup", () => {
+botaoDireita.addEventListener("touchend", () => {
+    event.preventDefault();
     direita = false;
 });
 
