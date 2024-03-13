@@ -90,6 +90,28 @@ const sprite_info = {
 
 let need_to_resize = true;
 
+let esquerda = false; // direita
+let direita = false; // esquerda
+
+const botaoEsquerda = document.getElementById("esquerda");
+const botaoDireita = document.getElementById("direita");
+
+botaoEsquerda.addEventListener("mousedown", () => {
+    esquerda = true;
+});
+
+botaoEsquerda.addEventListener("mouseup", () => {
+    esquerda = false;
+});
+
+botaoDireita.addEventListener("mousedown", () => {
+    direita = true;
+});
+
+botaoDireita.addEventListener("mouseup", () => {
+    direita = false;
+});
+
 function is_on_mobile() {
     return window.mobileCheck = function() {
         let check = false;
@@ -239,6 +261,8 @@ start().then(() => {
     resize_canvas();
 });
 
+let player_spanwed = false;
+
 // add event listeners
 document.addEventListener('keydown', (evento) => {
     const tecla = evento.key.toLowerCase();
@@ -313,38 +337,14 @@ document.addEventListener('keydown', (evento) => {
     }
 });
 
-let dou_a_bunda_d = false; // direita
-let dou_a_bunda_e = false; // esquerda
-
-document.getElementById("esquerda").addEventListener("mousedown", () => {
-    dou_a_bunda_e = true;
+const startA = () => {
     if (!started_playing && finished_playing_video && finished_playing_video_2) {
         current_song.play();
         current_song.volume = 0.1;
         started_playing = true;
         update_timer();
     }
-});
-
-document.getElementById("esquerda").addEventListener("mouseup", () => {
-    dou_a_bunda_e = false;
-    console.log("soltou esquerda");
-});
-
-document.getElementById("direita").addEventListener("mousedown", () => {
-    dou_a_bunda_d = true;
-    if (!started_playing && finished_playing_video && finished_playing_video_2) {
-        current_song.play();
-        current_song.volume = 0.1;
-        started_playing = true;
-        update_timer();
-    }
-});
-
-document.getElementById("direita").addEventListener("mouseup", () => {
-    dou_a_bunda_d = false;
-    console.log("soltou direita");
-});
+};
 
 document.getElementById("pular").addEventListener("click", () => {
     sprite_info.jump = true;
@@ -736,7 +736,7 @@ const update_animation = (key) => {
         context.restore(); 
     }
 
-    const ground = world.h - sprite_info.h + 1.4;
+    const ground = world.h - sprite_info.h + 2;
 
     // caso o player nao esteja no chao, nao esteja pulando e nao esteja coliidindo com a parte de baixo de cima do objeto, inicia a queda
 
@@ -980,12 +980,18 @@ const game_loop = (current_time) => {
     update_popup();
     update_popup_2();
 
+    if (!player_spanwed) {
+        sprite_info.y = canvas.height - sprite_info.h + 2;
+        player_spanwed = true;
+    }
+
     // update position
-    if ((key["d"] && sprite_info.can_move[1]) || (dou_a_bunda_e && sprite_info.can_move[1])) {
+    if ((key["d"] && sprite_info.can_move[1]) || (esquerda && sprite_info.can_move[1])) {
+        console.log("direita");
         sprite_info.x += 100 * delta_time * 2;
     }
 
-    if ((key["a"] && sprite_info.can_move[0]) || (dou_a_bunda_d && sprite_info.can_move[0])) {
+    if ((key["a"] && sprite_info.can_move[0]) || (direita && sprite_info.can_move[0])) {
         sprite_info.x -= 100 * delta_time * 2;
     }
 
@@ -1031,7 +1037,6 @@ button.addEventListener('click', () => {
                     need_to_resize = true;
                     document.querySelector(".control-container").style.display = "flex";
                     sprite_info.x = 0;
-                    sprite_info.y = canvas.height - sprite_info.h + 2;
                     clearInterval(video_interval);
                     requestAnimationFrame(game_loop);
                 }
