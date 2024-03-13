@@ -3,9 +3,6 @@ const canvas = document.getElementById("canvas");
 /** @type {CanvasRenderingContext2D} */
 const context = canvas.getContext("2d");
 
-const canvas_width = 800;
-const canvas_height = 600;
-
 let last_time = performance.now(), delta_time = 0, key = [], objects = [], did_detected_all_collisions = false, levels = [], current_level = 0, filtered_levels = [];
 let loaded = false;
 const max_levels = 2;
@@ -31,7 +28,10 @@ const level_1_tips = [
     "aperte R para resetar o level",
 ];
 
-// textures name: 1 = yellow-brick, 2 = white stone, 3 = grass, 4 = weird ass sun.
+const canvas_extra = {
+    width: 0,
+    height: 0
+}
 
 const lose_canvas_popup = {
     text: "Voce Perdeu",
@@ -61,8 +61,8 @@ const object_placeholder = {
 const world = {
     x: 0,
     y: 0,
-    w: canvas_width,
-    h: canvas_height
+    w: canvas.width,
+    h: canvas.height
 };
 
 const sprite_info = {
@@ -88,6 +88,113 @@ const sprite_info = {
     falling: false
 };
 
+let need_to_resize = true;
+
+function is_on_mobile() {
+    return window.mobileCheck = function() {
+        let check = false;
+        (function(a){if(/(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile.+firefox|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows ce|xda|xiino/i.test(a)||/1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1 u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac( |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt( |\/)|klon|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|yas\-|your|zeto|zte\-/i.test(a.substr(0,4))) check = true;})(navigator.userAgent||navigator.vendor||window.opera);
+        return check;
+    }();
+}
+
+const original_pos = [];
+let created_og = false;
+
+function resize_canvas() {
+
+    if (!is_on_mobile() || !need_to_resize) {
+        return;
+    }
+
+    console.log("resizing");
+
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
+    let diff = [800 - width, 600 - height];
+
+    if (diff[0] < 0) {
+        diff[0] = +diff[0];
+    }
+
+    if (diff[1] < 0) {
+        diff[1] = +diff[1];
+    }
+
+    canvas_extra.width = 800 - diff[0];
+    canvas_extra.height = 600 - diff[1];
+
+    if (canvas_extra.width > 800) {
+        canvas_extra.width = 800;
+    }
+
+    if (canvas_extra.height > 600) {
+        canvas_extra.height = 600;
+    }
+
+    canvas.width = canvas_extra.width;
+    canvas.height = canvas_extra.height - 100;
+
+    // container do canvas
+    document.querySelector(".canvasShit").style.alignItems = "start";
+
+    if (!created_og) {
+
+        sprite_info.og_x = sprite_info.x;
+        sprite_info.og_y = sprite_info.y;
+
+        sprite_info.og_w = sprite_info.w;
+        sprite_info.og_h = sprite_info.h;
+
+        created_og = true;
+    }
+
+    const scaleX = canvas.width / 800; 
+    const scaleY = canvas.height / 600; 
+
+    sprite_info.x = sprite_info.og_x * scaleX;
+    sprite_info.y = sprite_info.og_y * scaleY;
+
+    sprite_info.w = sprite_info.og_w * scaleX;
+    sprite_info.h = sprite_info.og_h * scaleY;
+
+    world.w = canvas.width;
+    world.h = canvas.height;
+
+    if (!objects) {
+        return;
+    }
+
+    for (let i = 0; i < objects.length; i++) {
+
+        const object = objects[i];
+        
+        if (!original_pos[i]) {
+            original_pos[i] = {
+                x: object.x,
+                y: object.y,
+                w: object.w,
+                h: object.h
+            };
+        }
+        
+        if (!original_pos[i]) {
+            continue;
+        }
+
+        object.x = original_pos[i].x * scaleX;
+        object.y = original_pos[i].y * scaleY;
+
+        object.w = original_pos[i].w * scaleX;
+        object.h = original_pos[i].h * scaleY;    
+    }
+
+    need_to_resize = false;
+}
+
+window.onresize = () => { need_to_resize = true };
+
 const start = async () => {
 
     for (let i = 1; i <= 6; i++) {
@@ -96,20 +203,16 @@ const start = async () => {
         all_sprite_frames.push(img);
     }
 
-    for (let i = 1; i <= 6; i++) {
+    for (let i = 1; i <= 7; i++) {
         const img = new Image();
         const extension = i == 4 ? "png" : "jpg";
         img.src = `./textures/${i}.${extension}`;
         all_textures.push(img);
     }
 
-    // test level
-    //levels.push([{"x":135,"y":543,"w":145,"h":30,"color":"red","types":["solid","pushable","finish","player"],"type":"solid","can_move":[true,true,true,true]},{"x":326,"y":528,"w":186,"h":30,"color":"red","types":["solid","pushable","finish","player"],"type":"solid","can_move":[true,true,true,true]},{"x":542,"y":497,"w":192,"h":31,"color":"red","types":["solid","pushable","finish","player"],"type":"solid","can_move":[true,true,true,true]},{"x":627,"y":453,"w":45,"h":44,"color":"blue","types":["solid","pushable","finish","player"],"type":"pushable","can_move":[true,true,true,true]},{"x":684,"y":356,"w":94,"h":34,"color":"blue","types":["solid","pushable","finish","player"],"type":"pushable","can_move":[true,true,true,true]},{"x":539,"y":378,"w":44,"h":31,"color":"red","types":["solid","pushable","finish","player"],"type":"solid","can_move":[true,true,true,true]},{"x":477,"y":242,"w":147,"h":30,"color":"yellow","types":["solid","pushable","finish","player"],"type":"finish","can_move":[true,true,true,true]}])
-
-    //levels.push([{"x":65,"y":562,"w":161,"h":22,"color":"red","types":["solid","pushable","finish","player"],"type":"solid","can_move":[true,true,true,true]},{"x":269,"y":532,"w":221,"h":21,"color":"red","types":["solid","pushable","finish","player"],"type":"solid","can_move":[true,true,true,true]},{"x":531,"y":492,"w":201,"h":21,"color":"red","types":["solid","pushable","finish","player"],"type":"solid","can_move":[true,true,true,true]},{"x":423,"y":410,"w":110,"h":23,"color":"red","types":["solid","pushable","finish","player"],"type":"solid","can_move":[true,true,true,true]},{"x":536,"y":448,"w":49,"h":43,"color":"blue","types":["solid","pushable","finish","player"],"type":"pushable","can_move":[true,true,true,true]}])
     levels.push([{"x":227,"y":540,"w":166,"h":32,"color":"red","types":["solid","pushable","finish","player"],"type":"solid","can_move":[true,true,true,true]},{"x":431,"y":492,"w":212,"h":27,"color":"red","types":["solid","pushable","finish","player"],"type":"solid","can_move":[true,true,true,true]},{"x":674,"y":451,"w":122,"h":25,"color":"red","types":["solid","pushable","finish","player"],"type":"solid","can_move":[true,true,true,true]},{"x":744,"y":387,"w":45,"h":65,"color":"yellow","types":["solid","pushable","finish","player"],"type":"finish","can_move":[true,true,true,true]},{"x":39,"y":535,"w":32,"h":57,"color":"black","types":["solid","pushable","finish","player"],"type":"player","can_move":[true,true,true,true]},{"x":139,"y":569,"w":46,"h":27,"color":"red","types":["solid","pushable","finish","player"],"type":"solid","can_move":[true,true,true,true]}]);
     levels.push([{"x":47,"y":553,"w":218,"h":28,"color":"red","types":["solid","pushable","finish","player"],"type":"solid","can_move":[true,true,true,true]},{"x":326,"y":544,"w":233,"h":24,"color":"red","types":["solid","pushable","finish","player"],"type":"solid","can_move":[true,true,true,true]},{"x":596,"y":508,"w":169,"h":28,"color":"red","types":["solid","pushable","finish","player"],"type":"solid","can_move":[true,true,true,true]},{"x":454,"y":420,"w":132,"h":27,"color":"red","types":["solid","pushable","finish","player"],"type":"solid","can_move":[true,true,true,true]},{"x":699,"y":454,"w":68,"h":25,"color":"red","types":["solid","pushable","finish","player"],"type":"solid","can_move":[true,true,true,true]},{"x":637,"y":406,"w":30,"h":32,"color":"red","types":["solid","pushable","finish","player"],"type":"solid","can_move":[true,true,true,true]},{"x":334,"y":449,"w":77,"h":16,"color":"blue","types":["solid","pushable","finish","player"],"type":"pushable","can_move":[true,true,true,true]},{"x":75,"y":286,"w":38,"h":75,"color":"yellow","types":["solid","pushable","finish","player"],"type":"finish","can_move":[true,true,true,true]},{"x":62,"y":493,"w":23,"h":49,"color":"black","types":["solid","pushable","finish","player"],"type":"player","can_move":[true,true,true,true]},{"x":74,"y":361,"w":150,"h":38,"color":"red","types":["solid","pushable","finish","player"],"type":"solid","can_move":[true,true,true,true]}])
-    levels.push([{"x":65,"y":562,"w":161,"h":22,"color":"red","types":["solid","pushable","finish","player"],"type":"solid","can_move":[true,true,true,true]},{"x":269,"y":532,"w":221,"h":21,"color":"red","types":["solid","pushable","finish","player"],"type":"solid","can_move":[true,true,true,true]},{"x":531,"y":492,"w":201,"h":21,"color":"red","types":["solid","pushable","finish","player"],"type":"solid","can_move":[true,true,true,true]},{"x":423,"y":410,"w":110,"h":23,"color":"red","types":["solid","pushable","finish","player"],"type":"solid","can_move":[true,true,true,true]},{"x":536,"y":448,"w":49,"h":43,"color":"blue","types":["solid","pushable","finish","player"],"type":"pushable","can_move":[true,true,true,true]},{"x":283,"y":378,"w":114,"h":24,"color":"red","types":["solid","pushable","finish","player"],"type":"solid","can_move":[true,true,true,true]},{"x":158,"y":351,"w":97,"h":25,"color":"red","types":["solid","pushable","finish","player"],"type":"solid","can_move":[true,true,true,true]},{"x":56.5,"y":341.5,"w":85,"h":31,"color":"red","types":["solid","pushable","finish","player"],"type":"solid","can_move":[true,true,true,true]},{"x":2.5,"y":324,"w":41,"h":14,"color":"red","types":["solid","pushable","finish","player"],"type":"solid","can_move":[true,true,true,true]},{"x":57,"y":283,"w":66,"h":10,"color":"red","types":["solid","pushable","finish","player"],"type":"solid","can_move":[true,true,true,true]},{"x":162.5,"y":274.5,"w":75,"h":11,"color":"blue","types":["solid","pushable","finish","player"],"type":"pushable","can_move":[true,true,true,true]},{"x":257,"y":265,"w":122,"h":16,"color":"red","types":["solid","pushable","finish","player"],"type":"solid","can_move":[true,true,true,true]},{"x":395,"y":187,"w":401,"h":22,"color":"red","types":["solid","pushable","finish","player"],"type":"solid","can_move":[true,true,true,true]},{"x":762,"y":131,"w":30,"h":55,"color":"yellow","types":["solid","pushable","finish","player"],"type":"finish","can_move":[true,true,true,true]},{"x":312,"y":243,"w":23,"h":24,"color":"red","types":["solid","pushable","finish","player"],"type":"solid","can_move":[true,true,true,true]},{"x":335,"y":215,"w":25,"h":29,"color":"red","types":["solid","pushable","finish","player"],"type":"solid","can_move":[true,true,true,true]}]);
+    levels.push([{"x":65,"y":562,"w":161,"h":22,"color":"red","types":["solid","pushable","finish","player"],"type":"solid","can_move":[true,true,true,true]},{"x":269,"y":532,"w":221,"h":21,"color":"red","types":["solid","pushable","finish","player"],"type":"solid","can_move":[true,true,true,true]},{"x":531,"y":492,"w":201,"h":21,"color":"red","types":["solid","pushable","finish","player"],"type":"solid","can_move":[true,true,true,true]},{"x":423,"y":410,"w":110,"h":23,"color":"red","types":["solid","pushable","finish","player"],"type":"solid","can_move":[true,true,true,true]},{"x":536,"y":448,"w":49,"h":43,"color":"blue","types":["solid","pushable","finish","player"],"type":"pushable","can_move":[true,true,true,true]},{"x":283,"y":378,"w":114,"h":24,"color":"red","types":["solid","pushable","finish","player"],"type":"solid","can_move":[true,true,true,true]},{"x":158,"y":351,"w":97,"h":25,"color":"red","types":["solid","pushable","finish","player"],"type":"solid","can_move":[true,true,true,true]},{"x":58.5,"y":355.5,"w":85,"h":31,"color":"red","types":["solid","pushable","finish","player"],"type":"solid","can_move":[true,true,true,true]},{"x":4.5,"y":320,"w":41,"h":14,"color":"red","types":["solid","pushable","finish","player"],"type":"solid","can_move":[true,true,true,true]},{"x":75,"y":300,"w":66,"h":10,"color":"red","types":["solid","pushable","finish","player"],"type":"solid","can_move":[true,true,true,true]},{"x":244,"y":269,"w":122,"h":16,"color":"red","types":["solid","pushable","finish","player"],"type":"solid","can_move":[true,true,true,true]},{"x":434.5,"y":200,"w":401,"h":22,"color":"red","types":["solid","pushable","finish","player"],"type":"solid","can_move":[true,true,true,true]},{"x":762,"y":131,"w":30,"h":55,"color":"yellow","types":["solid","pushable","finish","player"],"type":"finish","can_move":[true,true,true,true]},{"x":383.5,"y":222,"w":23,"h":24,"color":"red","types":["solid","pushable","finish","player"],"type":"solid","can_move":[true,true,true,true]},{"x":168.5,"y":280,"w":39,"h":12,"color":"red","types":["solid","pushable","finish","player"],"type":"solid","can_move":[true,true,true,true]}]);
     
     const level = levels[current_level];
 
@@ -118,7 +221,6 @@ const start = async () => {
     });
 
     objects = filtered_levels[current_level];
-
     objects_backup = [...filtered_levels];
 
     if (level.length == 0) {
@@ -127,12 +229,14 @@ const start = async () => {
     else {
         objects.filter((a) => {a.type != "player"});
         console.log("Objects: " + objects);
-    }     
+    }
+    
 }
 
 start().then(() => {
     loaded = true;
     console.log("Loaded!");
+    resize_canvas();
 });
 
 // add event listeners
@@ -209,6 +313,48 @@ document.addEventListener('keydown', (evento) => {
     }
 });
 
+let dou_a_bunda_d = false; // direita
+let dou_a_bunda_e = false; // esquerda
+
+document.getElementById("esquerda").addEventListener("mousedown", () => {
+    dou_a_bunda_e = true;
+    if (!started_playing && finished_playing_video && finished_playing_video_2) {
+        current_song.play();
+        current_song.volume = 0.1;
+        started_playing = true;
+        update_timer();
+    }
+});
+
+document.getElementById("esquerda").addEventListener("mouseup", () => {
+    dou_a_bunda_e = false;
+    console.log("soltou esquerda");
+});
+
+document.getElementById("direita").addEventListener("mousedown", () => {
+    dou_a_bunda_d = true;
+    if (!started_playing && finished_playing_video && finished_playing_video_2) {
+        current_song.play();
+        current_song.volume = 0.1;
+        started_playing = true;
+        update_timer();
+    }
+});
+
+document.getElementById("direita").addEventListener("mouseup", () => {
+    dou_a_bunda_d = false;
+    console.log("soltou direita");
+});
+
+document.getElementById("pular").addEventListener("click", () => {
+    sprite_info.jump = true;
+    sprite_info.jump_height = 0;
+});
+
+document.getElementById("wow").addEventListener("click", () => {
+    sprite_info.doing_360 = true;
+})
+
 function collision(object1, object2) {
 
     return !(
@@ -231,7 +377,7 @@ const update_timer = () => {
     // renderiza no canvas o tempo restante
     context.fillStyle = "white";
     context.font = "42px Arial";
-    context.fillText(Math.floor(seconds), canvas_width - 58, 42);
+    context.fillText(Math.floor(seconds), canvas.width - 58, 42);
 };
 
 const update_popup = () => {
@@ -246,7 +392,7 @@ const update_popup = () => {
 
     context.fillStyle = "rgba(255, 255, 255," + lose_canvas_popup.opacicity + ")";
     context.font = "30px Arial";
-    context.fillText(lose_canvas_popup.text, (canvas_width / 2) - 80, canvas_height / 2);
+    context.fillText(lose_canvas_popup.text, (canvas.width / 2) - 80, canvas.height / 2);
 };
 
 const update_popup_2 = () => {
@@ -261,7 +407,7 @@ const update_popup_2 = () => {
 
     context.fillStyle = "rgba(255, 255, 255," + win_canvas_popup.opacicity + ")";
     context.font = "30px Arial";
-    context.fillText(win_canvas_popup.text, (canvas_width / 2) - 100, canvas_height / 2);
+    context.fillText(win_canvas_popup.text, (canvas.width / 2) - 100, canvas.height / 2);
 }
 
 let last_enemy_pos = [0, 0, 0, 0];  
@@ -326,6 +472,7 @@ const detect_collision = (player, enemy) => {
 sprite_info.y = world.h - sprite_info.h + 1.4;
 
 const do_jump = () => {
+
     if (!sprite_info.jump) {
         return;
     }
@@ -409,7 +556,6 @@ const update_object_position = () => {
                 }
 
                 const collision = object_collision();
-                const ground = world.h - objects[i].h;
 
                 if (objects[i].type != "pushable") {
                     break;
@@ -466,10 +612,11 @@ const update_object_position = () => {
 const draw_object = (obj, using_texture, id) => { 
 
     const texture_image = all_textures[id];
-    const texture = using_texture ? context.createPattern(texture_image, "repeat") : obj.color;
+    const texture = using_texture ? context.createPattern(texture_image, null) : obj.color;
 
     context.fillStyle = texture;
     context.fillRect(obj.x, obj.y, obj.w, obj.h);
+
     if (id != 5) {
         context.strokeRect(obj.x, obj.y, obj.w, obj.h);
     }
@@ -517,7 +664,7 @@ const draw_tip = () => {
     
     context.fillStyle = "rgba(255, 255, 255," + tip_opacity + ")";
     context.font = "18px Arial";
-    context.fillText(last_tip, 70, canvas_height - 100);
+    context.fillText(last_tip, canvas.width / 3, canvas.height - 100, canvas.width / 2);
 }
 
 document.getElementById("video2").addEventListener("ended", () => {
@@ -625,10 +772,14 @@ const game_loop = (current_time) => {
     }
 
     // clear
-    context.clearRect(0, 0, canvas_width, canvas_height);
+    context.clearRect(0, 0, canvas.width, canvas.height);
+
+    // que se foda, desempenho vai pro krl mas to com preguica de colocar pra dar resize so quando necessario
+    resize_canvas();
 
     // draw floor + sky
     if (objects) {
+
         const color = "green";
         context.fillStyle = color;
 
@@ -646,12 +797,13 @@ const game_loop = (current_time) => {
         const texture_image_1 = all_textures[3];
         const texture_1 = context.createPattern(texture_image_1, "no-repeat");
         context.fillStyle = texture_1;
-        context.fillRect(10, 15, 250, 250);    
+        context.fillRect(10, 15, 0.31 * canvas.width, 0.41 * canvas.height);    
     }
 
     if (objects) {
 
         objects.forEach(object => {
+
             if (object.type == "player") {
                 return;
             }
@@ -663,7 +815,7 @@ const game_loop = (current_time) => {
                 draw_object(object, true, 1);
             }
             else {
-                draw_object(object);
+                draw_object(object, true, 6);
             }
         });     
     }
@@ -673,18 +825,18 @@ const game_loop = (current_time) => {
         video.play();
 
         if (!finished_playing_video_2) {
-            context.drawImage(video, 0, 0, canvas_width, canvas_height);
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
         }
         else {
 
             video.pause();
 
-            context.drawImage(all_textures[5], 0, 0, canvas_width, canvas_height);
+            context.drawImage(all_textures[5], 0, 0, canvas.width, canvas.height);
 
             context.fillStyle = "black";
             context.font = "30px Arial";
-            context.fillText("Parabens ELTER!!!!!", (canvas_width / 2) - 30, canvas_height / 2);
-            context.fillText("Voce terminou o jogo", (canvas_width / 2) - 40, canvas_height / 2 + 30);
+            context.fillText("Parabens ELTER!!!!!", (canvas.width / 2) - 30, canvas.height / 2);
+            context.fillText("Voce terminou o jogo", (canvas.width / 2) - 40, canvas.height / 2 + 30);
         }      
     }
 
@@ -713,8 +865,6 @@ const game_loop = (current_time) => {
             // caso o objeto seja finnish, para o loop e da load no proximo level e posiciona o player no inicio do level
             if ((objects[i].type == "finish" && collision && !delayed_reset) || (reseting && !delayed_reset)) {
 
-                // objects_backup = objects_backup[current_level];
-
                 if (current_level >= levels.length - 1 && !alerted && !reseting) {
                     alert("Voce Finalizou o jogo!!!!!");
                     alerted = true;
@@ -738,7 +888,7 @@ const game_loop = (current_time) => {
                 }
 
                 sprite_info.x = 0;
-                sprite_info.y = canvas_height - sprite_info.h + 1.4;
+                sprite_info.y = canvas.height - sprite_info.h + 2;
 
                 current_song.currentTime = 0;
                 current_song.pause();
@@ -757,9 +907,31 @@ const game_loop = (current_time) => {
                 lose_canvas_popup.opacicity = 0;
                 
                 if (!reseting) {
+
                     current_song.currentTime = 0;
-                    current_level++;    
+                    current_level++;
                     objects = objects_backup[current_level];
+
+                    sprite_info.x = 0;
+                    sprite_info.y = canvas.height - sprite_info.h + 2;
+
+                    if (objects) {
+
+                        for (let i = 0; i < objects.length; i++) {
+
+                            const object = objects[i];
+    
+                            original_pos[i] = {
+                                x: object.x,
+                                y: object.y,
+                                w: object.w,
+                                h: object.h
+                            };
+    
+                        }
+                    }
+                              
+                    need_to_resize = true;
                 }
                 else {
                     console.log("Resetando level");
@@ -789,7 +961,6 @@ const game_loop = (current_time) => {
                 sprite_info.can_move[1] = false;
             }
 
-            // verifica se todas as detecções do loop foram feitas
             if (i == objects.length - 1) {
                 did_detected_all_collisions = true;
             }
@@ -810,11 +981,11 @@ const game_loop = (current_time) => {
     update_popup_2();
 
     // update position
-    if (key["d"] && sprite_info.can_move[1]) {
+    if ((key["d"] && sprite_info.can_move[1]) || (dou_a_bunda_e && sprite_info.can_move[1])) {
         sprite_info.x += 100 * delta_time * 2;
     }
 
-    if (key["a"] && sprite_info.can_move[0]) {
+    if ((key["a"] && sprite_info.can_move[0]) || (dou_a_bunda_d && sprite_info.can_move[0])) {
         sprite_info.x -= 100 * delta_time * 2;
     }
 
@@ -836,17 +1007,16 @@ button.addEventListener('click', () => {
 
     const interval = setInterval(() => {
 
-        context.clearRect(0, 0, canvas_width, canvas_height);
+        context.clearRect(0, 0, canvas.width, canvas.height);
         context.fillStyle = "white";
         context.font = "30px Arial";
-        context.fillText("Loading...", (canvas_width / 2) - 30, canvas_height / 2);
+        context.fillText("Loading...", (canvas.width / 2) - 30, canvas.height / 2);
     
         if (loaded && iter >= 1) {
 
             clearInterval(interval);
 
             video.play();
-
 
             const video_interval = setInterval(() => {
 
@@ -858,12 +1028,16 @@ button.addEventListener('click', () => {
                 if (finished_playing_video) {
                     console.log("Finished playing video");
                     localStorage.setItem("skipped", "true");
+                    need_to_resize = true;
+                    document.querySelector(".control-container").style.display = "flex";
+                    sprite_info.x = 0;
+                    sprite_info.y = canvas.height - sprite_info.h + 2;
                     clearInterval(video_interval);
                     requestAnimationFrame(game_loop);
                 }
                 else {
 
-                    context.drawImage(video, 0, 0, canvas_width, canvas_height);
+                    context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
                     console.log("Playing video");
             

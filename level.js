@@ -9,15 +9,9 @@ const object_placeholder = {
     color: "red",
     types: ["solid", "pushable", "finish", "player"],
     type: "solid",
-    can_move: [true, true, true, true] // array de booleanos left, right, up, down
+    can_move: [true, true, true, true]
 };
 
-// logica do script:
-// o usuario vai poder desenhar na tela o tipo de objeto que ele quer
-// caso a ultima tecla do usuario for 1, ele vai desenhar um objeto solido, se for 2, um objeto pushable.
-// no final ele vai pegar todos os objetos e salvar em um arquivo json para download
-
-// variaveis globais
 let objects = [];
 let current_object = 0;
 let current_type = "solid";
@@ -46,9 +40,7 @@ file_input.addEventListener('change', (e) => {
     };
 
     reader.readAsText(file_input.files[0]);
-});    
-
-// funcoes
+});   
 
 function draw() {
 
